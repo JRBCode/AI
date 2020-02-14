@@ -3,7 +3,7 @@
 # @author bulbasaur
 # @description 
 # @created 2019-09-28T20:44:02.614Z+08:00
-# @last-modified 2019-10-05T23:12:46.996Z+08:00
+# @last-modified 2020-02-14T17:41:55.890Z+08:00
 #
 
 # import pdb
@@ -41,6 +41,9 @@ group_close = []
 
 # 使用过的所有节点数
 COUNT1 = 0
+
+# 终止运行标志
+STOP = False
 
 # 生成随机 N 数码数组
 def range_create(num):
@@ -241,7 +244,7 @@ def check_yesno(init, goal):
         for n in range(m+1, num):
             if grp2[m] > grp2[n]:
                 inver_goal += 1
-    # 矩阵为奇数行，加上零到终点位置的行数之差
+    # 矩阵为偶数行，加上零到终点位置的行数之差
     if row % 2 == 0:
         inver_init += int(math.fabs(zero_init - zero_goal))
     # 奇偶性相同，返回 True，否则返回 False
@@ -313,6 +316,9 @@ def continuous_run(sec, num, arit):
         sv_open.set(grp_tran(group_init))
     
         second = 1.0 + float(1-sca.get())
+        # 检查是否按下终止按钮
+        if check_stop(sec):
+            return
         time.sleep(second)
         event.wait()
         list_A.select_clear(0, END)
@@ -321,7 +327,7 @@ def continuous_run(sec, num, arit):
 
     # 计时
     time_start = time.time()
-    while group_open:
+    while group_open:        
         # 从 OPEN 表中选取 fn 值最小的节点移到 CLOSE 表中
         group_open[min_open()].set_num(len(group_close))
         group_close.append(group_open[min_open()])
@@ -336,6 +342,9 @@ def continuous_run(sec, num, arit):
             tree1.selection_set(st)
             sv_open.set(grp_tran(in1.group))
             second = 1.0 + float(1-sca.get())
+            # 检查是否按下终止按钮
+            if check_stop(sec):
+                return
             time.sleep(second*1.2)
             event.wait()
             
@@ -347,6 +356,9 @@ def continuous_run(sec, num, arit):
             tree2.selection_set(st)
             sv_close.set(grp_tran(in1.group))
             second = 1.0 + float(1-sca.get())
+            # 检查是否按下终止按钮
+            if check_stop(sec):
+                return
             time.sleep(second*0.3)
             event.wait()
             list_A.select_clear(0, END)
@@ -363,12 +375,15 @@ def continuous_run(sec, num, arit):
             if sec:
                 list_A.select_set(4)
             continuous_end(sec)
-            messagebox.showerror(parent=root, title="A-Star 算法", message="求解成功！！！")
+            messagebox.showinfo(parent=root, title="A-Star 算法", message="求解成功！！！")
             return
 
         if sec:
             list_A.select_set(5)
             second = 1.0 + float(1-sca.get())
+            # 检查是否按下终止按钮
+            if check_stop(sec):
+                return
             time.sleep(second*0.5)
             event.wait()
             list_A.select_clear(0, END)
@@ -380,19 +395,23 @@ def continuous_run(sec, num, arit):
         # 左移
         grp2 = get_clo_end(grp_clo)
         grp1 = MOVE.left(grp2)
-        open_expand(grp1, deep1, arit, clo, second)
+        if open_expand(grp1, deep1, arit, clo, second):
+            return
         # 右移
         grp2 = get_clo_end(grp_clo)
         grp1 = MOVE.right(grp2)
-        open_expand(grp1, deep1, arit, clo, second)
+        if open_expand(grp1, deep1, arit, clo, second):
+            return
         # 上移
         grp2 = get_clo_end(grp_clo)
         grp1 = MOVE.up(grp2)
-        open_expand(grp1, deep1, arit, clo, second)
+        if open_expand(grp1, deep1, arit, clo, second):
+            return
         # 下移
         grp2 = get_clo_end(grp_clo)
         grp1 = MOVE.down(grp2)
-        open_expand(grp1, deep1, arit, clo, second)
+        if open_expand(grp1, deep1, arit, clo, second):
+            return
 
         # 若 OPEN表为空，退出，宣告失败
         if not group_open:
@@ -412,12 +431,18 @@ def get_clo_end(grp_clo):
     return grp[:]
 
 def open_expand(grp1, deep1, arit, clo, second):
+    # 检查是否按下终止按钮
+    if check_stop(second):
+        return True
     global COUNT1
     if grp1:
         if second:
             sv_open.set(grp_tran(grp1))
             list_A.select_set(7)
             second = 1.0 + float(1-sca.get())
+            # 检查是否按下终止按钮
+            if check_stop(second):
+                return True
             time.sleep(second*0.5)
             event.wait()
             list_A.select_clear(0, END)
@@ -442,6 +467,9 @@ def open_expand(grp1, deep1, arit, clo, second):
                         tree1.selection_set(st)
                         tree1.yview_moveto(inde/len(group_open))
                         second = 1.0 + float(1-sca.get())
+                        # 检查是否按下终止按钮
+                        if check_stop(second):
+                            return True
                         time.sleep(second)
                         event.wait()
                         
@@ -450,11 +478,17 @@ def open_expand(grp1, deep1, arit, clo, second):
                         tree1.set(st, '4', group_open[inde].fn)
 
                         second = 1.0 + float(1-sca.get())
+                        # 检查是否按下终止按钮
+                        if check_stop(second):
+                            return True
                         time.sleep(second)
                         event.wait()
                         list_A.select_clear(0, END)
                         list_A.select_set(12)
                         second = 1.0 + float(1-sca.get())
+                        # 检查是否按下终止按钮
+                        if check_stop(second):
+                            return True
                         time.sleep(second)
                         event.wait()
                         list_A.select_clear(0, END)
@@ -462,6 +496,9 @@ def open_expand(grp1, deep1, arit, clo, second):
                     if second:
                         list_A.select_set(10)
                         second = 1.0 + float(1-sca.get())
+                        # 检查是否按下终止按钮
+                        if check_stop(second):
+                            return True
                         time.sleep(second)
                         event.wait()
                         list_A.select_clear(0, END)
@@ -478,6 +515,9 @@ def open_expand(grp1, deep1, arit, clo, second):
                     st = 'I' + str(hex(num1+1))[2:].upper().zfill(3)
                     tree1.selection_set(st)
                     second = 1.0 + float(1-sca.get())
+                    # 检查是否按下终止按钮
+                    if check_stop(second):
+                        return True
                     time.sleep(second)
                     event.wait()
                     list_A.select_clear(0, END)
@@ -486,21 +526,30 @@ def open_expand(grp1, deep1, arit, clo, second):
             if second:
                 list_A.select_set(8)
                 second = 1.0 + float(1-sca.get())
+                # 检查是否按下终止按钮
+                if check_stop(second):
+                    return True
                 time.sleep(second)
                 event.wait()
                 list_A.select_clear(0, END)
         if second:
             list_A.select_set(12)
             second = 1.0 + float(1-sca.get())
+            # 检查是否按下终止按钮
+            if check_stop(second):
+                return True
             time.sleep(second*0.5)
             event.wait()
             list_A.select_clear(0, END)
+
+    return False
 
 def continuous_head(sec):
     if sec:
         bt_pause['state'] = 'active'
         bt_start['text'] = '运行中'
-        bt_show_co['state'] = 'disabled'
+    else:
+        bt_fast['text'] = '运行中'
     lab7['font'] = get_bold2()
     lab8['font'] = get_bold2()
     bt1['state'] = 'disabled'
@@ -516,7 +565,8 @@ def continuous_head(sec):
     bt_start['state'] = 'disabled'
     bt_show['state'] = 'disabled'
     bt_fast['state'] = 'disabled'
-    bt_fast['text'] = '运行中'
+    bt_show_co['state'] = 'disabled'
+    bt_stop['state'] = 'active'
     lab2['font'] = get_bold1()
     lab4['font'] = get_bold1()
     list_A.select_clear(0, END)
@@ -545,6 +595,7 @@ def continuous_end(sec):
     bt_show['state'] = 'active'
     bt_fast['state'] = 'active'
     bt_fast['text'] = '快速运行'
+    bt_stop['state'] = 'disabled'
     if not sec:
         bt_show_co['state'] = 'active'
 
@@ -567,13 +618,31 @@ def call_start(sec):
 def call_pause():
     bt_pause['state'] = 'disabled'
     bt_continue['state'] = 'active'
+    bt_stop['state'] = 'disabled'
     event.clear()
 
 # 继续按钮响应函数
 def call_continue():
     bt_continue['state'] = 'disabled'
     bt_pause['state'] = 'active'
+    bt_stop['state'] = 'active'
     event.set()
+
+# 终止按钮响应函数
+def call_stop():
+    global STOP
+    STOP = True
+    bt_stop['state'] = 'disabled'
+
+# 检查是否按下终止按钮
+def check_stop(sec):
+    global STOP
+    if STOP:
+        STOP = False
+        continuous_end(sec)
+        bt_show['state'] = 'disabled'
+        return True
+    return False
 
 # 结果展示调用函数
 def result_show():
@@ -746,7 +815,7 @@ sca.grid(row=9, column=1, columnspan=2, pady=30)
 
 # OPEN 表 Frame
 frame1 = Frame(root)
-frame1.grid(row=1, column=4, rowspan=3)
+frame1.grid(row=1, column=3, rowspan=3, columnspan=2)
 
 # CLOSE 表 Frame
 frame2 = Frame(root)
@@ -758,7 +827,7 @@ sv_open = StringVar()
 sv_open.set("\t       \n\n\n\n")
 lab7 = Label(root, fg='#0000CD', bg='gray', \
         compound='center', textvariable=sv_open, font='Helvetica -16 bold')
-lab7.grid(row=1, column=5, rowspan=3, padx=3)
+lab7.grid(row=1, column=5, rowspan=3, padx=15)
 
 sv_close = StringVar()
 sv_close.set("\t       \n\n\n\n")
@@ -769,18 +838,21 @@ lab8.grid(row=1, column=8, rowspan=3, padx=15, sticky=W)
 # A*算法流程框
 list_sv3 = StringVar()
 list_sv3.set(CONSTANT.list_A)
-list_A = Listbox(root, listvariable=list_sv3, width=81, height=15, selectmode=SINGLE)
+list_A = Listbox(root, listvariable=list_sv3, width=85, height=15, selectmode=SINGLE)
 list_A.grid(row=4, column=3, rowspan=5, columnspan=5, padx=20)
 
 # 按钮
 bt_start = Button(root, text="连续运行", width=12, command=lambda:call_start(1))
-bt_start.grid(row=9, column=4)
+bt_start.grid(row=9, column=3, padx=50)
 
 bt_pause = Button(root, text="暂停", width=9, state='disabled', command=call_pause)
-bt_pause.grid(row=9, column=5, sticky=W)
+bt_pause.grid(row=9, column=4)
 
 bt_continue = Button(root, text="继续", width=9, state='disabled', command=call_continue)
-bt_continue.grid(row=9, column=6, sticky=W)
+bt_continue.grid(row=9, column=5)
+
+bt_stop = Button(root, text="终止", width=9, state='disabled', command=call_stop)
+bt_stop.grid(row=9, column=6)
 
 bt_show_co = Button(root, text="展示OPEN/CLOSE表", width=18, state='disabled', command=call_result_co)
 bt_show_co.grid(row=8, column=8)
